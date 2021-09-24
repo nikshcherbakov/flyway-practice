@@ -3,53 +3,52 @@ package com.nikshcherbakov.flywaypractice.services;
 import com.nikshcherbakov.flywaypractice.models.Driver;
 import com.nikshcherbakov.flywaypractice.models.Truck;
 import com.nikshcherbakov.flywaypractice.repositories.DriverRepository;
-import com.nikshcherbakov.flywaypractice.utils.DriverRow;
+import com.nikshcherbakov.flywaypractice.dto.DriverDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class DriverService {
 
     private final DriverRepository repository;
-    private final TruckService truckService;
 
-    public boolean save(Driver driver) {
-        return repository.save(driver);
+    public void save(Driver driver) {
+        repository.save(driver);
     }
 
-    public Driver findDriverById(Long driverId) {
-        DriverRow driverRow = repository.findDriverById(driverId);
-        if (driverRow == null) {
-            return null;
-        }
-
-        return generateDriverFromDriverRow(driverRow);
+    public DriverDto findDriverById(Long driverId) {
+        Driver driver = repository.findDriverById(driverId);
+        return generateDriverDto(driver);
     }
 
-    public List<Driver> findAllDrivers() {
-        List<DriverRow> rows = repository.findAllDrivers();
-        List<Driver> drivers = new ArrayList<>(rows.size());
-        for (DriverRow driverRow : rows) {
-            Driver driver = generateDriverFromDriverRow(driverRow);
-            drivers.add(driver);
+    public List<DriverDto> findAllDrivers() {
+        List<Driver> drivers = repository.findAllDrivers();
+        List<DriverDto> driverDtoList = new ArrayList<>(drivers.size());
+        for (Driver driver : drivers) {
+            DriverDto dto = generateDriverDto(driver);
+            driverDtoList.add(dto);
         }
-        return drivers;
+        return driverDtoList;
     }
 
-    private Driver generateDriverFromDriverRow(DriverRow driverRow) {
-        Driver driver = new Driver();
-        driver.setId(driverRow.getId());
-        driver.setName(driverRow.getName());
+    private DriverDto generateDriverDto(Driver driver) {
+        DriverDto dto = new DriverDto();
+        dto.setId(driver.getId());
+        dto.setName(driver.getName());
 
-        if (driverRow.getTruckId() != null) {
-            Truck truck = truckService.findTruckById(driverRow.getTruckId());
-            driver.setTruck(truck);
+        Map<Long, String> driverTrucksMap = new HashMap<>(driver.getTrucks().size());
+        for (Truck truck : driver.getTrucks()) {
+            driverTrucksMap.put(truck.getId(), truck.getBrand());
         }
-        return driver;
+
+        dto.setTrucks(driverTrucksMap);
+        return dto;
     }
 
 }

@@ -1,17 +1,11 @@
 package com.nikshcherbakov.flywaypractice.models;
 
-import lombok.*;
-import org.hibernate.Hibernate;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-import java.util.Objects;
-
-@Getter
-@Setter
-@ToString
-@RequiredArgsConstructor
+@Data
 @AllArgsConstructor
 public class Truck {
-
     private Long id;
     private String brand;
     private String model;
@@ -21,16 +15,7 @@ public class Truck {
         this.model = model;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Truck truck = (Truck) o;
-        return Objects.equals(id, truck.id);
-    }
+    public Truck() {
 
-    @Override
-    public int hashCode() {
-        return 0;
     }
 }

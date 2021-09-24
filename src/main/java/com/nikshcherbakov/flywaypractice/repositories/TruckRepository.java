@@ -20,10 +20,9 @@ public class TruckRepository {
         return new Truck(id, brand, model);
     };
 
-    public boolean save(Truck truck) {
+    public void save(Truck truck) {
         String sql = "insert into truck (brand, model) values (?, ?)";
-        int affectedRows = jdbcTemplate.update(sql, truck.getBrand(), truck.getModel());
-        return affectedRows == 1;
+        jdbcTemplate.update(sql, truck.getBrand(), truck.getModel());
     }
 
     public Truck findTruckById(long id) {

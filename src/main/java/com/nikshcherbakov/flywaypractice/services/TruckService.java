@@ -13,8 +13,8 @@ public class TruckService {
 
     private final TruckRepository repository;
 
-    public boolean save(Truck truck) {
-        return repository.save(truck);
+    public void save(Truck truck) {
+        repository.save(truck);
     }
 
     public Truck findTruckById(Long truckId) {

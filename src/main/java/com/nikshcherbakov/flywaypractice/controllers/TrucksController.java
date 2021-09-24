@@ -2,7 +2,7 @@ package com.nikshcherbakov.flywaypractice.controllers;
 
 import com.nikshcherbakov.flywaypractice.models.Truck;
 import com.nikshcherbakov.flywaypractice.services.TruckService;
-import com.nikshcherbakov.flywaypractice.utils.SimpleResponse;
+import com.nikshcherbakov.flywaypractice.dto.SimpleResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,29 +16,21 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/truck")
+@RequestMapping("/trucks")
 public class TrucksController {
 
     private final TruckService truckService;
 
-    @GetMapping("/create/{brand}/{model}")
-    public SimpleResponse createTruck(@PathVariable("brand") String brand, @PathVariable("model") String model) {
-        Truck truck = new Truck(brand, model);
-        boolean truckIsSaved = truckService.save(truck);
-        return new SimpleResponse(truckIsSaved ? "Truck is saved successfully" : "Truck is not saved!");
-    }
-
-    @GetMapping("/get-by-id/{truckId}")
-    public Object getTruckById(@PathVariable("truckId") Long truckId) {
-        Truck truck = truckService.findTruckById(truckId);
-        return truck != null ? truck : new SimpleResponse("No such truck in the database!");
-    }
-
-    @GetMapping("/get-all-trucks")
+    @GetMapping
     public Object getAllTrucks() {
         List<Truck> trucksFromDb = truckService.findAllTrucks();
         return !trucksFromDb.isEmpty() ? trucksFromDb :
-                new SimpleResponse("There are no trucks in the database yet!");
+                new SimpleResponseDto("There are no trucks in the database yet!");
     }
 
+    @GetMapping("/{truckId}")
+    public Object getTruckById(@PathVariable("truckId") Long truckId) {
+        Truck truck = truckService.findTruckById(truckId);
+        return truck != null ? truck : new SimpleResponseDto("No such truck in the database!");
+    }
 }
