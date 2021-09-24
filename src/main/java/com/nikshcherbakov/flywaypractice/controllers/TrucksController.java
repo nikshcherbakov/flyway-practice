@@ -2,15 +2,17 @@ package com.nikshcherbakov.flywaypractice.controllers;
 
 import com.nikshcherbakov.flywaypractice.models.Truck;
 import com.nikshcherbakov.flywaypractice.services.TruckService;
-import com.nikshcherbakov.flywaypractice.dto.SimpleResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 
@@ -22,15 +24,14 @@ public class TrucksController {
     private final TruckService truckService;
 
     @GetMapping
-    public Object getAllTrucks() {
-        List<Truck> trucksFromDb = truckService.findAllTrucks();
-        return !trucksFromDb.isEmpty() ? trucksFromDb :
-                new SimpleResponseDto("There are no trucks in the database yet!");
+    public ResponseEntity<List<Truck>> getAllTrucks() {
+        return new ResponseEntity<>(truckService.findAllTrucks(), HttpStatus.OK);
     }
 
     @GetMapping("/{truckId}")
-    public Object getTruckById(@PathVariable("truckId") Long truckId) {
-        Truck truck = truckService.findTruckById(truckId);
-        return truck != null ? truck : new SimpleResponseDto("No such truck in the database!");
+    public ResponseEntity<Truck> getTruckById(@PathVariable("truckId") Long truckId) {
+        Optional<Truck> truck = truckService.findTruckById(truckId);
+        return truck.map(value -> new ResponseEntity<>(truck.get(), HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.NOT_FOUND));
     }
 }

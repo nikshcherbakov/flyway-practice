@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -13,11 +14,12 @@ public class TruckService {
 
     private final TruckRepository repository;
 
-    public void save(Truck truck) {
-        repository.save(truck);
+    @SuppressWarnings("UnusedReturnValue")
+    public Truck save(Truck truck) {
+        return repository.save(truck);
     }
 
-    public Truck findTruckById(Long truckId) {
+    public Optional<Truck> findTruckById(Long truckId) {
         return repository.findTruckById(truckId);
     }
 

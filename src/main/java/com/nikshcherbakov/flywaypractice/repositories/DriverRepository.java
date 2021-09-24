@@ -2,8 +2,7 @@ package com.nikshcherbakov.flywaypractice.repositories;
 
 import com.nikshcherbakov.flywaypractice.models.Driver;
 import com.nikshcherbakov.flywaypractice.models.Truck;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.nikshcherbakov.flywaypractice.repositories.dto.DriverTruckDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,16 +14,11 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
 public class DriverRepository {
-    @Data
-    @AllArgsConstructor
-    private static class DriverTruck {
-        private Long driverId;
-        private Long truckId;
-    }
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -34,17 +28,7 @@ public class DriverRepository {
         return new Driver(id, name, null);
     };
 
-    private final RowMapper<DriverTruck> rowMapper2 = (rs, rowNum) ->
-            new DriverTruck(rs.getLong("driver_id"), rs.getLong("trucks_id"));
-
-    private final RowMapper<Truck> rowMapper3 = (rs, rowNum) -> {
-        Long truckId = rs.getLong("id");
-        String brand = rs.getString("brand");
-        String model = rs.getString("model");
-        return new Truck(truckId, brand, model);
-    };
-
-    public void save(Driver driver) {
+    public Driver save(Driver driver) {
         // Сохраняем водителя
         String saveDriverSql = "insert into driver (name) values (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -62,6 +46,8 @@ public class DriverRepository {
                 joinTruckToDriver(truck, driver);
             }
         }
+
+        return driver;
     }
 
     private void joinTruckToDriver(Truck truck, Driver driver) {
@@ -69,15 +55,15 @@ public class DriverRepository {
         jdbcTemplate.update(joinTruckToDriverSql, driver.getId(), truck.getId());
     }
 
-    public Driver findDriverById(Long id) {
+    public Optional<Driver> findDriverById(Long id) {
         String sql = "select * from driver where id = ?";
         List<Driver> drivers = jdbcTemplate.query(sql, rowMapper, id);
         if (drivers.size() != 1) {
-            return null;
+            return Optional.empty();
         }
         Driver driver = drivers.get(0);
         driver.setTrucks(findTrucksByDriver(driver));
-        return driver;
+        return Optional.of(driver);
     }
 
     public List<Driver> findAllDrivers() {
@@ -95,17 +81,27 @@ public class DriverRepository {
     private List<Truck> findTrucksByDriver(Driver driver) {
         List<Truck> trucksByDriver = new ArrayList<>();
         String trucksByDriverSql = "select * from driver_trucks where driver_id = ?";
-        List<DriverTruck> driverTruckList = jdbcTemplate.query(trucksByDriverSql, rowMapper2, driver.getId());
-        for (DriverTruck driverTruck : driverTruckList) {
-            Long truckId = driverTruck.getTruckId();
-            trucksByDriver.add(findTruckByTruckId(truckId));
+        List<DriverTruckDto> driverTruckDtoList = jdbcTemplate.query(
+                trucksByDriverSql,
+                (rs, rowNum) -> new DriverTruckDto(rs.getLong("driver_id"), rs.getLong("trucks_id")),
+                driver.getId()
+        );
+        for (DriverTruckDto driverTruckDto : driverTruckDtoList) {
+            Long truckId = driverTruckDto.getTruckId();
+            findTruckByTruckId(truckId).ifPresent(trucksByDriver::add);
         }
         return trucksByDriver;
     }
 
-    private Truck findTruckByTruckId(Long truckId) {
+    private Optional<Truck> findTruckByTruckId(Long truckId) {
         String sql = "select * from truck where id = ?";
-        return jdbcTemplate.query(sql, rowMapper3, truckId).get(0);
+        List<Truck> trucks = jdbcTemplate.query(sql, (rs, rowNum) -> new Truck(
+                    rs.getLong("id"),
+                    rs.getString("brand"),
+                    rs.getString("model")
+                ),
+                truckId);
+        return trucks.size() == 1 ? Optional.of(trucks.get(0)) : Optional.empty();
     }
 
 }
